@@ -1,28 +1,18 @@
 package com.veontomo.gdg1;
 
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import rx.Observable;
+import rx.Observer;
 import rx.functions.Action1;
+import rx.subjects.PublishSubject;
 
 public class MainActivity extends AppCompatActivity {
-
-    private void send(@NonNull final TextView tv, String... str){
-        Observable.from(str).subscribe(new Action1<String>(){
-
-            @Override
-            public void call(String s) {
-                tv.setText(s);
-            }
-        });
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,20 +20,45 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
     }
 
-    @Override
-    public void onStart(){
-        super.onStart();
-        TextView tv = (TextView) findViewById(R.id.name);
-        while (true){
-            send(tv, "Tania");
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                Log.i("GDG1", e.getMessage());
+    public void start(View v) {
+        final TextView tv = (TextView) findViewById(R.id.name);
+        Observable<String> names = Observable.just("Tania", "Nastia");
 
+        Observer<String> greeter = new Observer<String>() {
+
+            @Override
+            public void onCompleted() {
+               Log.i("GDG1", "No more greetings.");
             }
-            send(tv, "Nastia");
+
+            @Override
+            public void onError(Throwable e) {
+                Log.i("GDG1", "I'd greet somebody more!");
+            }
+
+            @Override
+            public void onNext(String t) {
+                tv.setText(t);
+                Log.i("GDG1", t + " " + System.currentTimeMillis());
+            }
+
+        };
+        names.subscribe(greeter);
+
+        PublishSubject<String> subject = PublishSubject.create();
+        subject.subscribe(greeter);
+        subject.onNext("Nastia");
+        try {
+            Thread.sleep(1000);
+            subject.onNext("Tania 1");
+            Thread.sleep(1000);
+            subject.onNext("Tania 2");
+            Thread.sleep(1000);
+            subject.onNext("Tania 3");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
+
 
     }
 
