@@ -1,18 +1,22 @@
 package com.veontomo.gdg1;
 
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import java.util.Random;
+
 import rx.Observable;
 import rx.Observer;
-import rx.functions.Action1;
+import rx.functions.Func1;
 import rx.subjects.PublishSubject;
 
 public class MainActivity extends AppCompatActivity {
+
+    private PublishSubject<String> subject;
+    private String[] pool = new String[]{"Tania", "Nastia", "Ланёнок", "Колбаска"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,15 +24,15 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
     }
 
-    public void start(View v) {
+    @Override
+    public void onResume() {
+        super.onResume();
         final TextView tv = (TextView) findViewById(R.id.name);
-        Observable<String> names = Observable.just("Tania", "Nastia");
-
         Observer<String> greeter = new Observer<String>() {
 
             @Override
             public void onCompleted() {
-               Log.i("GDG1", "No more greetings.");
+                Log.i("GDG1", "No more greetings." + " " + System.currentTimeMillis());
             }
 
             @Override
@@ -43,22 +47,19 @@ public class MainActivity extends AppCompatActivity {
             }
 
         };
-        names.subscribe(greeter);
+        subject = PublishSubject.create();
+        subject.map(new Func1<String, String>(){
+            @Override
+            public String call(String s) {
+                return s.toUpperCase();
+            }
+        }).subscribe(greeter);
 
-        PublishSubject<String> subject = PublishSubject.create();
-        subject.subscribe(greeter);
-        subject.onNext("Nastia");
-        try {
-            Thread.sleep(1000);
-            subject.onNext("Tania 1");
-            Thread.sleep(1000);
-            subject.onNext("Tania 2");
-            Thread.sleep(1000);
-            subject.onNext("Tania 3");
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    }
 
+    public void start(View v) {
+        int rnd = new Random().nextInt(pool.length);
+        subject.onNext(pool[rnd]);
 
     }
 
